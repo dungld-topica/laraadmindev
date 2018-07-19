@@ -42,15 +42,31 @@ class __controller_class_name__ extends Controller
 	 *
 	 * @return \Illuminate\Http\Response
 	 */
-	public function index()
+	public function index(Request $request)
 	{
+	    $page_size = 10;
+
+        if (isset($_REQUEST['pagesize'])) {
+            $page_size = $_REQUEST['pagesize'];
+        }
+
+        $search = '';
+
+        if (isset($_REQUEST['search'])) {
+            $search = $_REQUEST['search'];
+        }
+
 		$module = Module::get('__module_name__');
 		
 		if(Module::hasAccess($module->id)) {
+		    $list = DB::table('__db_table_name__')->select($this->listing_cols)->whereNull('deleted_at')->paginate($page_size);
+		    // Add search to query: ->where('name', 'LIKE', '%'.$search.'%')
 			return View('la.__view_folder__.index', [
 				'show_actions' => $this->show_action,
 				'listing_cols' => $this->listing_cols,
-				'module' => $module
+				'view_col' => $this->view_col,
+				'module' => $module,
+                'list' => $list,
 			]);
 		} else {
             return redirect(config('laraadmin.adminRoute')."/");
@@ -64,7 +80,16 @@ class __controller_class_name__ extends Controller
 	 */
 	public function create()
 	{
-		//
+		if(Module::hasAccess("__module_name__", "create")) {		
+            $module = Module::get('__module_name__');
+
+            return view('la.__view_folder__.add', [
+                'module' => $module,
+                'view_col' => $this->view_col,
+            ]);
+		} else {
+			return redirect(config('laraadmin.adminRoute')."/");
+		}
 	}
 
 	/**
@@ -77,18 +102,22 @@ class __controller_class_name__ extends Controller
 	{
 		if(Module::hasAccess("__module_name__", "create")) {
 		
-			$rules = Module::validateRules("__module_name__", $request);
-			
-			$validator = Validator::make($request->all(), $rules);
-			
-			if ($validator->fails()) {
-				return redirect()->back()->withErrors($validator)->withInput();
-			}
-			
-			$insert_id = Module::insert("__module_name__", $request);
-			
-			return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
-			
+//			$rules = Module::validateRules("__module_name__", $request);
+//
+//			$validator = Validator::make($request->all(), $rules);
+//
+//			if ($validator->fails()) {
+//				return redirect()->back()->withErrors($validator)->withInput();
+//			}
+//			$insert_id = Module::insert("__module_name__", $request);
+//			return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+
+            $field = __model_name__::insertModule("__module_name__", $request);
+            if (is_int($field)) {
+                return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+            } else {
+                return $field;
+            }
 		} else {
 			return redirect(config('laraadmin.adminRoute')."/");
 		}
@@ -167,18 +196,22 @@ class __controller_class_name__ extends Controller
 	{
 		if(Module::hasAccess("__module_name__", "edit")) {
 			
-			$rules = Module::validateRules("__module_name__", $request, true);
-			
-			$validator = Validator::make($request->all(), $rules);
-			
-			if ($validator->fails()) {
-				return redirect()->back()->withErrors($validator)->withInput();;
-			}
-			
-			$insert_id = Module::updateRow("__module_name__", $request, $id);
-			
-			return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
-			
+//			$rules = Module::validateRules("__module_name__", $request, true);
+//			
+//			$validator = Validator::make($request->all(), $rules);
+//			
+//			if ($validator->fails()) {
+//				return redirect()->back()->withErrors($validator)->withInput();;
+//			}
+//			$insert_id = Module::updateRow("__module_name__", $request, $id);
+//			return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+
+			$field = __model_name__::updateModule("__module_name__", $request,$id);
+            if (is_int($field)) {
+                return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+            } else {
+                return $field;
+            }
 		} else {
 			return redirect(config('laraadmin.adminRoute')."/");
 		}

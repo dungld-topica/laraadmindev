@@ -391,4 +391,65 @@ class LAHelper
 		$md = file_get_contents($from);
 		return $md;
 	}
+
+    /*
+     * Convert to date: Y-m-d
+     *
+     * @dateStr: d-m-Y
+     * @delimiter: -
+     *
+     * @return string
+     *
+     * DungLD
+     * */
+    public static function toDate($dateStr, $delimiter = '-')
+    {
+        if ($dateStr != null && $dateStr != "") {
+            $list = explode($delimiter, $dateStr); // d-m-Y
+            return $list[2] . '-' . $list[1] . '-' . $list[0]; // Y-m-d
+        }
+        else {
+            return '0000-00-00';
+        }
+    }
+
+    /*
+     * Convert to date: Y-m-d 00:00:00
+     *
+     * @dateStr: d-m-Y
+     * @delimiter: -
+     *
+     * @return string
+     *
+     * DungLD
+     * */
+    public static function toDateTime($dateStr, $delimiter = '-')
+    {
+        if ($dateStr != null && $dateStr != "") {
+            $list = explode($delimiter, $dateStr); // d.m.Y H:i:s
+            return $list[2] . '-' . $list[1] . '-' . $list[0] . ' 00:00:00'; // Y-m-d H:i:s
+        }
+        else {
+            return '0000-00-00 00:00:00';
+        }
+    }
+
+    /*
+     * Cut chuỗi theo số ký tự truyền vào
+     *
+     * @return string
+     *
+     * DungLD
+     * */
+    public static function CutString($strInput, $intchar)
+    {
+        if (strlen($strInput) > $intchar) {
+            $strInput = substr($strInput, 0, $intchar);
+            $index = strrpos($strInput, ' ');
+            $strInput = substr($strInput, 0, $index);
+            $strInput = $strInput . "...";
+        }
+        $strInput = str_pad($strInput, $intchar, ' ');
+        return $strInput;
+    }
 }

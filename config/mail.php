@@ -108,5 +108,5 @@ return [
     */
 
     'sendmail' => '/usr/sbin/sendmail -bs',
-
+    'pretend' => false, // 20180301 - DungLD - Mail
 ];

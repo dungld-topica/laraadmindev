@@ -52,7 +52,27 @@ trait RegistersUsers
      */
     public function register(Request $request)
     {
+        // 20180302 - DungLD - Start - Captcha for Register User
         $validator = $this->validator($request->all());
+
+        if ($validator->fails()) {
+            $this->throwValidationException(
+                $request, $validator
+            );
+        }
+
+        $token = $request->input('g-recaptcha-response');
+        if(strlen($token) > 0){
+            Auth::guard($this->getGuard())->login($this->create($request->all()));
+
+            return redirect($this->redirectPath());
+        }
+        else{
+            return redirect('/register');
+        }
+        // 20180302 - DungLD - End - Captcha for Register User
+
+        /*$validator = $this->validator($request->all());
 
         if ($validator->fails()) {
             $this->throwValidationException(
@@ -62,7 +82,7 @@ trait RegistersUsers
 
         Auth::guard($this->getGuard())->login($this->create($request->all()));
 
-        return redirect($this->redirectPath());
+        return redirect($this->redirectPath());*/
     }
 
     /**

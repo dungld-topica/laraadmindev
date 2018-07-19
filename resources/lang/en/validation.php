@@ -95,6 +95,12 @@ return [
         'attribute-name' => [
             'rule-name' => 'custom-message',
         ],
+        // 20180302 - DungLD - Start - Captcha
+        'g-recaptcha-response' => [
+            'required' => 'Please verify that you are not a robot.',
+            //'captcha' => 'Captcha error! try again later or contact site admin.',
+        ],
+        // 20180302 - DungLD - End - Captcha
     ],
 
     /*
@@ -108,6 +114,14 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        // 20180305 - DungLD - Start - Change Language
+        'user' => [
+            'name' => 'Full name',
+            'email' => 'Email',
+            'password' => 'Password',
+        ],
+        // 20180305 - DungLD - End - Change Language
+    ],
 
 ];

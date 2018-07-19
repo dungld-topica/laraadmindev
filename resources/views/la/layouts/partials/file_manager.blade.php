@@ -1,8 +1,8 @@
 <script src="{{ asset('la-assets/plugins/dropzone/dropzone.js') }}"></script>
 
 <div class="modal fade" id="fm" role="dialog" aria-labelledby="fileManagerLabel">
-	<input type="hidden" id="image_selecter_origin" value="">
-	<input type="hidden" id="image_selecter_origin_type" value="">
+	<!--<input type="hidden" id="image_selecter_origin" value="">-->
+	<!--<input type="hidden" id="image_selecter_origin_type" value="">-->
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -22,6 +22,10 @@
 									{{ Form::checkbox("public", "public", config("laraadmin.uploads.default_public"), []) }}
 									<div class="Switch Ajax Round On"><div class="Toggle"></div></div>
 								@endif
+								<!-- 20180517 - DungLD - Start -->
+								<input type="hidden" name="image_selecter_origin" id="image_selecter_origin" value="">
+								<input type="hidden" name="image_selecter_origin_type" id="image_selecter_origin_type" value="">
+								<!-- 20180517 - DungLD - End -->
 							</form>
 						</div>
 					</div>

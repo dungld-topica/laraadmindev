@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Entity\__entity__;
 
 class __model_class_name__ extends Model
 {
@@ -22,4 +23,32 @@ class __model_class_name__ extends Model
 	protected $guarded = [];
 
 	protected $dates = ['deleted_at'];
+        //huanttn
+        protected $fillable = [__model_fillable__];
+        static $redirect_url=null;
+        static $rules = array(
+            //refer https://laravel.com/docs/5.5/validation#available-validation-rules
+            __model_fillrule__
+        );
+        static function InsertEntity($entity) {
+            $entityArr = (array) $entity;
+            return static::insertModule("__entity_class_name__", $entity,$entityArr,self::$redirect_url);
+        }
+        static function UpdateEntity($entity,$id) {
+            if($id==0){
+                return config('laraadmin.admin').'/';
+            }
+            if(isset($entity->id)){
+                unset($entity->id);
+            }
+            $entityArr = (array) $entity;
+            return static::updateModule("__entity_class_name__", $entity,$id, $entityArr,self::$redirect_url);
+        }
+        static function getByKey($id) {
+            __model_new_entity__
+        }
+        static function getAll() {
+            __model_get_all__
+        }
+        //end huantn
 }

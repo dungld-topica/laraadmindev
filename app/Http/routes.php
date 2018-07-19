@@ -15,6 +15,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// 20180302 - DungLD - Change Language
+Route::post('/language', array(
+    'Middleware' => 'LanguageSwitcher',
+    'uses' => 'LanguageController@index'
+));
+
 /* ================== Homepage + Admin Routes ================== */
 
-require __DIR__.'/admin_routes.php';
+require __DIR__ . '/admin_routes.php';
+require __DIR__ . '/api_routes.php';

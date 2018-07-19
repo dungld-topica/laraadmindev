@@ -15,6 +15,10 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
+        // 20180302 - DungLD - Start - Change Language
+        //\Illuminate\Session\Middleware\StartSession::class,
+        //\App\Http\Middleware\LanguageSwicher::class,
+        // 20180302 - DungLD - End - Change Language
     ];
 
     /**
@@ -29,6 +33,9 @@ class Kernel extends HttpKernel
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
+            // 20180305 - DungLD - Start - Change Language
+            \App\Http\Middleware\LanguageSwicher::class,
+            // 20180305 - DungLD - End - Change Language
         ],
 
         'api' => [

@@ -25,50 +25,52 @@ use Validator;
 use Datatables;
 
 use App\Models\Upload;
+use App\Http\Common\Resize;
 
 class UploadsController extends Controller
 {
-	public $show_action = true;
-	public $view_col = 'name';
-	public $listing_cols = ['id', 'name', 'path', 'extension', 'caption', 'user_id'];
-	
-	public function __construct() {
-		// for authentication (optional)
-		$this->middleware('auth', ['except' => 'get_file']);
-		
-		$module = Module::get('Uploads');
-		$listing_cols_temp = array();
-		foreach ($this->listing_cols as $col) {
-			if($col == 'id') {
-				$listing_cols_temp[] = $col;
-			} else if(Module::hasFieldAccess($module->id, $module->fields[$col]['id'])) {
-				$listing_cols_temp[] = $col;
-			}
-		}
-		$this->listing_cols = $listing_cols_temp;
-	}
-	
-	/**
-	 * Display a listing of the Uploads.
-	 *
-	 * @return \Illuminate\Http\Response
-	 */
-	public function index()
-	{
-		$module = Module::get('Uploads');
-		
-		if(Module::hasAccess($module->id)) {
-			return View('la.uploads.index', [
-				'show_actions' => $this->show_action,
-				'listing_cols' => $this->listing_cols,
-				'module' => $module
-			]);
-		} else {
-            return redirect(config('laraadmin.adminRoute')."/");
+    public $show_action = true;
+    public $view_col = 'name';
+    public $listing_cols = ['id', 'name', 'path', 'extension', 'caption', 'user_id'];
+
+    public function __construct()
+    {
+        // for authentication (optional)
+        $this->middleware('auth', ['except' => 'get_file']);
+
+        $module = Module::get('Uploads');
+        $listing_cols_temp = array();
+        foreach ($this->listing_cols as $col) {
+            if ($col == 'id') {
+                $listing_cols_temp[] = $col;
+            } else if (Module::hasFieldAccess($module->id, $module->fields[$col]['id'])) {
+                $listing_cols_temp[] = $col;
+            }
         }
-	}
-	
-	/**
+        $this->listing_cols = $listing_cols_temp;
+    }
+
+    /**
+     * Display a listing of the Uploads.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $module = Module::get('Uploads');
+
+        if (Module::hasAccess($module->id)) {
+            return View('la.uploads.index', [
+                'show_actions' => $this->show_action,
+                'listing_cols' => $this->listing_cols,
+                'module' => $module
+            ]);
+        } else {
+            return redirect(config('laraadmin.adminRoute') . "/");
+        }
+    }
+
+    /**
      * Get file
      *
      * @return \Illuminate\Http\Response
@@ -76,45 +78,46 @@ class UploadsController extends Controller
     public function get_file($hash, $name)
     {
         $upload = Upload::where("hash", $hash)->first();
-        
+
         // Validate Upload Hash & Filename
-        if(!isset($upload->id) || $upload->name != $name) {
+        if (!isset($upload->id) || $upload->name != $name) {
             return response()->json([
                 'status' => "failure",
                 'message' => "Unauthorized Access 1"
             ]);
         }
 
-        if($upload->public == 1) {
+        if ($upload->public == 1) {
             $upload->public = true;
         } else {
             $upload->public = false;
         }
 
         // Validate if Image is Public
-        if(!$upload->public && !isset(Auth::user()->id)) {
+        if (!$upload->public && !isset(Auth::user()->id)) {
             return response()->json([
                 'status' => "failure",
                 'message' => "Unauthorized Access 2",
             ]);
         }
 
-        if($upload->public || Entrust::hasRole('SUPER_ADMIN') || Auth::user()->id == $upload->user_id) {
-            
+        if ($upload->public || Entrust::hasRole('SUPER_ADMIN') || Auth::user()->id == $upload->user_id) {
+
             $path = $upload->path;
 
-            if(!File::exists($path))
+            if (!File::exists($path))
                 abort(404);
-            
+
             // Check if thumbnail
             $size = Input::get('s');
-            if(isset($size)) {
-                if(!is_numeric($size)) {
+            if (isset($size)) {
+                if (!is_numeric($size)) {
                     $size = 150;
                 }
-                $thumbpath = storage_path("thumbnails/".basename($upload->path)."-".$size."x".$size);
-                
-                if(File::exists($thumbpath)) {
+                //$thumbpath = storage_path("thumbnails/".basename($upload->path)."-".$size."x".$size);
+                $thumbpath = public_path("thumbnails/" . basename($upload->path) . "-" . $size . "x" . $size); // DungLD
+
+                if (File::exists($thumbpath)) {
                     $path = $thumbpath;
                 } else {
                     // Create Thumbnail
@@ -127,13 +130,13 @@ class UploadsController extends Controller
             $type = File::mimeType($path);
 
             $download = Input::get('download');
-            if(isset($download)) {
+            if (isset($download)) {
                 return response()->download($path, $upload->name);
             } else {
                 $response = FacadeResponse::make($file, 200);
                 $response->header("Content-Type", $type);
             }
-            
+
             return $response;
         } else {
             return response()->json([
@@ -148,79 +151,101 @@ class UploadsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function upload_files() {
-        
-		if(Module::hasAccess("Uploads", "create")) {
-			$input = Input::all();
-			
-			if(Input::hasFile('file')) {
-				/*
-				$rules = array(
-					'file' => 'mimes:jpg,jpeg,bmp,png,pdf|max:3000',
-				);
-				$validation = Validator::make($input, $rules);
-				if ($validation->fails()) {
-					return response()->json($validation->errors()->first(), 400);
-				}
-				*/
-				$file = Input::file('file');
-				
-				// print_r($file);
-				
-				$folder = storage_path('uploads');
-				$filename = $file->getClientOriginalName();
-	
-				$date_append = date("Y-m-d-His-");
-				$upload_success = Input::file('file')->move($folder, $date_append.$filename);
-				
-				if( $upload_success ) {
-	
-					// Get public preferences
-					// config("laraadmin.uploads.default_public")
-					$public = Input::get('public');
-					if(isset($public)) {
-						$public = true;
-					} else {
-						$public = false;
-					}
-	
-					$upload = Upload::create([
-						"name" => $filename,
-						"path" => $folder.DIRECTORY_SEPARATOR.$date_append.$filename,
-						"extension" => pathinfo($filename, PATHINFO_EXTENSION),
-						"caption" => "",
-						"hash" => "",
-						"public" => $public,
-						"user_id" => Auth::user()->id
-					]);
-					// apply unique random hash to file
-					while(true) {
-						$hash = strtolower(str_random(20));
-						if(!Upload::where("hash", $hash)->count()) {
-							$upload->hash = $hash;
-							break;
-						}
-					}
-					$upload->save();
-	
-					return response()->json([
-						"status" => "success",
-						"upload" => $upload
-					], 200);
-				} else {
-					return response()->json([
-						"status" => "error"
-					], 400);
-				}
-			} else {
-				return response()->json('error: upload file not found.', 400);
-			}
-		} else {
-			return response()->json([
-				'status' => "failure",
-				'message' => "Unauthorized Access"
-			]);
-		}
+    public function upload_files()
+    {
+
+        if (Module::hasAccess("Uploads", "create")) {
+            $input = Input::all();
+
+            if (Input::hasFile('file')) {
+                /*
+                $rules = array(
+                    'file' => 'mimes:jpg,jpeg,bmp,png,pdf|max:3000',
+                );
+                $validation = Validator::make($input, $rules);
+                if ($validation->fails()) {
+                    return response()->json($validation->errors()->first(), 400);
+                }
+                */
+                $file = Input::file('file');
+
+                // print_r($file);
+
+                //$folder = storage_path('uploads');
+                $folder = public_path('uploads'); // DungLD
+                $filename = $file->getClientOriginalName();
+                // 20180517 - DungLD - Start
+                $image_folder = "";
+                $image_selecter_origin = Input::get('image_selecter_origin');
+                if (isset($image_selecter_origin)) {
+                    $image_folder = "/" . $image_selecter_origin;
+                }
+                $date_append = date("Y-m-d-His-");
+                // $upload_success = Input::file('file')->move($folder, $date_append.$filename);
+                $upload_success = Input::file('file')->move($folder . $image_folder, $date_append . $filename); // DungLD
+                if ($image_selecter_origin == "avatar") {
+                    $width = config('imageupload.avatar.width');
+                    $height = config('imageupload.avatar.height');
+
+                    // *** 1) Initialise / load image
+                    $resizeObj = new resize($folder . $image_folder . DIRECTORY_SEPARATOR . $date_append . $filename);
+
+                    // *** 2) Resize image (options: exact, portrait, landscape, auto, crop)
+                    $resizeObj->resizeImage($width, $height, 'crop');
+
+                    // *** 3) Save image
+                    $resizeObj->saveImage($folder . $image_folder . DIRECTORY_SEPARATOR . $date_append . $filename, 100);
+                }
+                // 20180517 - DungLd - End
+                if ($upload_success) {
+
+                    // Get public preferences
+                    // config("laraadmin.uploads.default_public")
+                    $public = Input::get('public');
+                    if (isset($public)) {
+                        $public = true;
+                    } else {
+                        $public = false;
+                    }
+
+                    $upload = Upload::create([
+                        "name" => $filename,
+                        //"path" => $folder.DIRECTORY_SEPARATOR.$date_append.$filename,
+                        "path" => $folder . $image_folder . DIRECTORY_SEPARATOR . $date_append . $filename, // DungLD
+                        "extension" => pathinfo($filename, PATHINFO_EXTENSION),
+                        "caption" => "",
+                        "hash" => "",
+                        "public" => $public,
+                        "user_id" => Auth::user()->id
+                    ]);
+                    // apply unique random hash to file
+                    while (true) {
+                        $hash = strtolower(str_random(20));
+                        if (!Upload::where("hash", $hash)->count()) {
+                            $upload->hash = $hash;
+                            break;
+                        }
+                    }
+                    $upload->save();
+
+                    return response()->json([
+                        "status" => "success",
+                        "upload" => $upload
+                    ], 200);
+                } else {
+                    return response()->json([
+                        "status" => "error"
+                    ], 400);
+                }
+            } else {
+                return response()->json('error: upload file not found.', 400);
+            }
+        } else {
+            return response()->json([
+                'status' => "failure",
+                'message' => "Unauthorized Access"
+            ]);
+        }
     }
 
     /**
@@ -230,50 +255,50 @@ class UploadsController extends Controller
      */
     public function uploaded_files()
     {
-		if(Module::hasAccess("Uploads", "view")) {
-			$uploads = array();
-	
-			// print_r(Auth::user()->roles);
-			if(Entrust::hasRole('SUPER_ADMIN')) {
-				$uploads = Upload::all();
-			} else {
-				if(config('laraadmin.uploads.private_uploads')) {
-					// Upload::where('user_id', 0)->first();
-					$uploads = Auth::user()->uploads;
-				} else {
-					$uploads = Upload::all();
-				}
-			}
-			$uploads2 = array();
-			foreach ($uploads as $upload) {
-				$u = (object) array();
-				$u->id = $upload->id;
-				$u->name = $upload->name;
-				$u->extension = $upload->extension;
-				$u->hash = $upload->hash;
-				$u->public = $upload->public;
-				$u->caption = $upload->caption;
-				$u->user = $upload->user->name;
-				
-				$uploads2[] = $u;
-			}
-			
-			// $folder = storage_path('/uploads');
-			// $files = array();
-			// if(file_exists($folder)) {
-			//     $filesArr = File::allFiles($folder);
-			//     foreach ($filesArr as $file) {
-			//         $files[] = $file->getfilename();
-			//     }
-			// }
-			// return response()->json(['files' => $files]);
-			return response()->json(['uploads' => $uploads2]);
-		} else {
-			return response()->json([
-				'status' => "failure",
-				'message' => "Unauthorized Access"
-			]);
-		}
+        if (Module::hasAccess("Uploads", "view")) {
+            $uploads = array();
+
+            // print_r(Auth::user()->roles);
+            if (Entrust::hasRole('SUPER_ADMIN')) {
+                $uploads = Upload::all();
+            } else {
+                if (config('laraadmin.uploads.private_uploads')) {
+                    // Upload::where('user_id', 0)->first();
+                    $uploads = Auth::user()->uploads;
+                } else {
+                    $uploads = Upload::all();
+                }
+            }
+            $uploads2 = array();
+            foreach ($uploads as $upload) {
+                $u = (object)array();
+                $u->id = $upload->id;
+                $u->name = $upload->name;
+                $u->extension = $upload->extension;
+                $u->hash = $upload->hash;
+                $u->public = $upload->public;
+                $u->caption = $upload->caption;
+                $u->user = $upload->user->name;
+
+                $uploads2[] = $u;
+            }
+
+            // $folder = storage_path('/uploads');
+            // $files = array();
+            // if(file_exists($folder)) {
+            //     $filesArr = File::allFiles($folder);
+            //     foreach ($filesArr as $file) {
+            //         $files[] = $file->getfilename();
+            //     }
+            // }
+            // return response()->json(['files' => $files]);
+            return response()->json(['uploads' => $uploads2]);
+        } else {
+            return response()->json([
+                'status' => "failure",
+                'message' => "Unauthorized Access"
+            ]);
+        }
     }
 
     /**
@@ -283,40 +308,40 @@ class UploadsController extends Controller
      */
     public function update_caption()
     {
-        if(Module::hasAccess("Uploads", "edit")) {
-			$file_id = Input::get('file_id');
-			$caption = Input::get('caption');
-			
-			$upload = Upload::find($file_id);
-			if(isset($upload->id)) {
-				if($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
-	
-					// Update Caption
-					$upload->caption = $caption;
-					$upload->save();
-	
-					return response()->json([
-						'status' => "success"
-					]);
-	
-				} else {
-					return response()->json([
-						'status' => "failure",
-						'message' => "Upload not found"
-					]);
-				}
-			} else {
-				return response()->json([
-					'status' => "failure",
-					'message' => "Upload not found"
-				]);
-			}
-		} else {
-			return response()->json([
-				'status' => "failure",
-				'message' => "Unauthorized Access"
-			]);
-		}
+        if (Module::hasAccess("Uploads", "edit")) {
+            $file_id = Input::get('file_id');
+            $caption = Input::get('caption');
+
+            $upload = Upload::find($file_id);
+            if (isset($upload->id)) {
+                if ($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
+
+                    // Update Caption
+                    $upload->caption = $caption;
+                    $upload->save();
+
+                    return response()->json([
+                        'status' => "success"
+                    ]);
+
+                } else {
+                    return response()->json([
+                        'status' => "failure",
+                        'message' => "Upload not found"
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'status' => "failure",
+                    'message' => "Upload not found"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => "failure",
+                'message' => "Unauthorized Access"
+            ]);
+        }
     }
 
     /**
@@ -326,40 +351,40 @@ class UploadsController extends Controller
      */
     public function update_filename()
     {
-        if(Module::hasAccess("Uploads", "edit")) {
-			$file_id = Input::get('file_id');
-			$filename = Input::get('filename');
-			
-			$upload = Upload::find($file_id);
-			if(isset($upload->id)) {
-				if($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
-	
-					// Update Caption
-					$upload->name = $filename;
-					$upload->save();
-	
-					return response()->json([
-						'status' => "success"
-					]);
-	
-				} else {
-					return response()->json([
-						'status' => "failure",
-						'message' => "Unauthorized Access 1"
-					]);
-				}
-			} else {
-				return response()->json([
-					'status' => "failure",
-					'message' => "Upload not found"
-				]);
-			}
-		} else {
-			return response()->json([
-				'status' => "failure",
-				'message' => "Unauthorized Access"
-			]);
-		}
+        if (Module::hasAccess("Uploads", "edit")) {
+            $file_id = Input::get('file_id');
+            $filename = Input::get('filename');
+
+            $upload = Upload::find($file_id);
+            if (isset($upload->id)) {
+                if ($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
+
+                    // Update Caption
+                    $upload->name = $filename;
+                    $upload->save();
+
+                    return response()->json([
+                        'status' => "success"
+                    ]);
+
+                } else {
+                    return response()->json([
+                        'status' => "failure",
+                        'message' => "Unauthorized Access 1"
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'status' => "failure",
+                    'message' => "Upload not found"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => "failure",
+                'message' => "Unauthorized Access"
+            ]);
+        }
     }
 
     /**
@@ -369,45 +394,45 @@ class UploadsController extends Controller
      */
     public function update_public()
     {
-		if(Module::hasAccess("Uploads", "edit")) {
-			$file_id = Input::get('file_id');
-			$public = Input::get('public');
-			if(isset($public)) {
-				$public = true;
-			} else {
-				$public = false;
-			}
-			
-			$upload = Upload::find($file_id);
-			if(isset($upload->id)) {
-				if($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
-	
-					// Update Caption
-					$upload->public = $public;
-					$upload->save();
-	
-					return response()->json([
-						'status' => "success"
-					]);
-	
-				} else {
-					return response()->json([
-						'status' => "failure",
-						'message' => "Unauthorized Access 1"
-					]);
-				}
-			} else {
-				return response()->json([
-					'status' => "failure",
-					'message' => "Upload not found"
-				]);
-			}
-		} else {
-			return response()->json([
-				'status' => "failure",
-				'message' => "Unauthorized Access"
-			]);
-		}
+        if (Module::hasAccess("Uploads", "edit")) {
+            $file_id = Input::get('file_id');
+            $public = Input::get('public');
+            if (isset($public)) {
+                $public = true;
+            } else {
+                $public = false;
+            }
+
+            $upload = Upload::find($file_id);
+            if (isset($upload->id)) {
+                if ($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
+
+                    // Update Caption
+                    $upload->public = $public;
+                    $upload->save();
+
+                    return response()->json([
+                        'status' => "success"
+                    ]);
+
+                } else {
+                    return response()->json([
+                        'status' => "failure",
+                        'message' => "Unauthorized Access 1"
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'status' => "failure",
+                    'message' => "Upload not found"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => "failure",
+                'message' => "Unauthorized Access"
+            ]);
+        }
     }
 
     /**
@@ -417,37 +442,62 @@ class UploadsController extends Controller
      */
     public function delete_file()
     {
-        if(Module::hasAccess("Uploads", "delete")) {
-			$file_id = Input::get('file_id');
-			
-			$upload = Upload::find($file_id);
-			if(isset($upload->id)) {
-				if($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
-	
-					// Update Caption
-					$upload->delete();
-	
-					return response()->json([
-						'status' => "success"
-					]);
-	
-				} else {
-					return response()->json([
-						'status' => "failure",
-						'message' => "Unauthorized Access 1"
-					]);
-				}
-			} else {
-				return response()->json([
-					'status' => "failure",
-					'message' => "Upload not found"
-				]);
-			}
-		} else {
-			return response()->json([
-				'status' => "failure",
-				'message' => "Unauthorized Access"
-			]);
-		}
+        if (Module::hasAccess("Uploads", "delete")) {
+            $file_id = Input::get('file_id');
+
+            $upload = Upload::find($file_id);
+            if (isset($upload->id)) {
+                if ($upload->user_id == Auth::user()->id || Entrust::hasRole('SUPER_ADMIN')) {
+
+                    // Update Caption
+                    $upload->delete();
+
+                    return response()->json([
+                        'status' => "success"
+                    ]);
+
+                } else {
+                    return response()->json([
+                        'status' => "failure",
+                        'message' => "Unauthorized Access 1"
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'status' => "failure",
+                    'message' => "Upload not found"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => "failure",
+                'message' => "Unauthorized Access"
+            ]);
+        }
     }
+
+    // 20180517 - DungLD - Start
+    public static function get_image_by_id($avatar)
+    {
+        $image_path = array();
+        $arr_avatar = array();
+
+        preg_match_all('!\d+!', $avatar, $arr_avatar);
+        if (count($arr_avatar) > 0) {
+            foreach ($arr_avatar as $item => $value) {
+                if (count($value) > 0) {
+                    $arr_value = $value;
+                    foreach ($arr_value as $i => $v) {
+                        $image = Upload::find($v);
+                        if (isset($image)) {
+                            array_push($image_path, '/files/' . $image->hash . '/' . $image->name);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $image_path;
+    }
+    // 20180517 - DungLD - End
 }
