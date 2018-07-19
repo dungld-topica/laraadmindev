@@ -7,7 +7,10 @@
     "require": {
         "php": ">=5.5.9",
         "laravel/framework": "5.2.*",
-        "dwij/laraadmin": "1.0.40"
+        "dwij/laraadmin": "1.0.40",
+        "eelkevdbos/firebase-php": "dev-master",
+        "webonyx/graphql-php": "^0.10.0",
+	"rebing/graphql-laravel": "~1.7"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

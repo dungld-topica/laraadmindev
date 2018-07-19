@@ -160,8 +160,6 @@ return [
          * LaraAdmin Providers...
          */
         Dwij\Laraadmin\LAProvider::class,
-	
-	    Rebing\GraphQL\GraphQLServiceProvider::class,
 
     ],
 
