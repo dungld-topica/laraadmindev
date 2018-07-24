@@ -93,7 +93,8 @@ class EmployeesController extends Controller
 			}
 			
 			// generate password
-			$password = LAHelper::gen_password();
+			//$password = LAHelper::gen_password();
+			$password = '123456';
 			
 			// Create Employee
 			$employee_id = Module::insert("Employees", $request);
