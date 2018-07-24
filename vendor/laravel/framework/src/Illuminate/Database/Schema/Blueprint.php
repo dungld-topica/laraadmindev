@@ -818,6 +818,15 @@ class Blueprint
         return $this->timestamp('deleted_at')->nullable();
     }
 
+    // 20180209 - DungLD - Start - Add create and update by to table
+    public function userExecute()
+    {
+        $this->integer('created_by')->nullable();
+
+        $this->integer('updated_by')->nullable();
+    }
+    // 20180209 - DungLD - End - Add create and update by to table
+
     /**
      * Create a new binary column on the table.
      *

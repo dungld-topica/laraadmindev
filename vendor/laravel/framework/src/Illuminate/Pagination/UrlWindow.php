@@ -36,6 +36,20 @@ class UrlWindow
         return (new static($paginator))->get($onEachSide);
     }
 
+    // DungLD - Start
+    public static function makePageSize(PaginatorContract $paginator)
+    {
+        return (new static($paginator))->getUrlPageSize();
+    }
+    // DungLD - End
+
+    // DungLD - Start
+    public static function makePerPage(PaginatorContract $paginator)
+    {
+        return (new static($paginator))->getPerPage();
+    }
+    // DungLD - End
+
     /**
      * Get the window of URLs to be shown.
      *
@@ -50,6 +64,20 @@ class UrlWindow
 
         return $this->getUrlSlider($onEachSide);
     }
+
+    // DungLD - Start
+    public function getUrlPageSize()
+    {
+        return $this->paginator->getUrlPageSize();
+    }
+    // DungLD - End
+
+    // DungLD - Start
+    public function getPerPage()
+    {
+        return $this->paginator->getPerPage();
+    }
+    // DungLD - End
 
     /**
      * Get the slider of URLs there are not enough pages to slide.

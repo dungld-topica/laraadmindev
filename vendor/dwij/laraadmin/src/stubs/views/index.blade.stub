@@ -8,7 +8,8 @@
 
 @section("headerElems")
 @la_access("__module_name__", "create")
-	<button class="btn btn-success btn-sm pull-right" data-toggle="modal" data-target="#AddModal">Add __singular_cap_var__</button>
+	<!--<button class="btn btn-success btn-sm pull-right" data-toggle="modal" data-target="#AddModal">Add __singular_cap_var__</button>-->
+	<button class="btn btn-success btn-sm pull-right"><a style="color:#FFF;" href="{{ url(config('laraadmin.adminRoute') . '/__db_table_name__/create') }}">Add __singular_cap_var__</a></button>
 @endla_access
 @endsection
 
@@ -23,6 +24,36 @@
         </ul>
     </div>
 @endif
+
+<div class="search-form">
+	<form id="form1" name="form1" method="GET" action="">
+		<div class="form-group">
+			<input class="form-control" placeholder="Search" id="search" name="search" type="text" value="">
+		</div>
+	</form>
+</div>
+
+<!-- DungLD - Start -->
+@foreach( $list as $item )
+    <div class="box box-solid">
+        <div class="box-header with-border">
+            <h3 class="box-title"><a href="{{ url(config('laraadmin.adminRoute') . '/__db_table_name__/' . $item->id )}}">{{ $item->$view_col }}</a></h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+            <blockquote>
+               @foreach( $listing_cols as $col )
+                   @if ($col != 'id' && $col != $view_col)
+                       <p>{{ $module->fields[$col]['label'] or ucfirst($col) }}: {{ $item->$col }}</p>
+                   @endif
+               @endforeach
+            </blockquote>
+        </div>
+        <!-- /.box-body -->
+    </div>
+@endforeach
+{{ $list->links() }}
+<!-- DungLD - End -->
 
 <div class="box box-success">
 	<!--<div class="box-header"></div>-->
@@ -77,10 +108,12 @@
 
 @push('styles')
 <link rel="stylesheet" type="text/css" href="{{ asset('la-assets/plugins/datatables/datatables.min.css') }}"/>
+<link rel="stylesheet" type="text/css" href="{{ asset('la-assets/plugins/pagination/pagination.css') }}"/>
 @endpush
 
 @push('scripts')
 <script src="{{ asset('la-assets/plugins/datatables/datatables.min.js') }}"></script>
+<script src="{{ asset('la-assets/plugins/pagination/pagination.js') }}"></script>
 <script>
 $(function () {
 	$("#example1").DataTable({

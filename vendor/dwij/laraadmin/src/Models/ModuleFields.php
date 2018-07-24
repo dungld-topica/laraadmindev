@@ -77,6 +77,9 @@ class ModuleFields extends Model
                     $table->increments('id');
                     $table->softDeletes();
                     $table->timestamps();
+                    // 20180209 - DungLD - Start - Add create and update by to table
+                    $table->userExecute();
+                    // 20180209 - DungLD - End - Add create and update by to table
                 });
             }
             Schema::table($module->name_db, function($table) use ($field, $module) {

@@ -59,6 +59,9 @@ abstract class AbstractPaginator implements Htmlable
      */
     protected $pageName = 'page';
 
+    // DungLD
+    protected $pageSize = 'pagesize';
+
     /**
      * The current page resolver callback.
      *
@@ -135,6 +138,20 @@ abstract class AbstractPaginator implements Htmlable
                         .http_build_query($parameters, '', '&')
                         .$this->buildFragment();
     }
+
+    // DungLD - Start
+    public function getUrlPageSize()
+    {
+        return $this->path;
+    }
+    // DungLD - End
+
+    // DungLD - Start
+    public function getPerPage()
+    {
+        return $this->perPage;
+    }
+    // DungLD - End
 
     /**
      * Get the URL for the previous page.

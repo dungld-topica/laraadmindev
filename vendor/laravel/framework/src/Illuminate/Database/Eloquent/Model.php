@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\ConnectionResolverInterface as Resolver;
+use Validator; //huantn
+use Auth; // DungLD
 
 abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializable, QueueableEntity, UrlRoutable
 {
@@ -273,12 +275,30 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      */
     const UPDATED_AT = 'updated_at';
 
+    // 20180209 - DungLD - Start - Add create and update by to table
+    /**
+     * The name of the "created by" column.
+     *
+     * @var string
+     */
+    const CREATED_BY = 'created_by';
+
+    /**
+     * The name of the "updated by" column.
+     *
+     * @var string
+     */
+    const UPDATED_BY = 'updated_by';
+    // 20180209 - DungLD - End - Add create and update by to table
+
     /**
      * Create a new Eloquent model instance.
      *
      * @param  array  $attributes
      * @return void
      */
+    static $rules; //huantn
+
     public function __construct(array $attributes = [])
     {
         $this->bootIfNotBooted();
@@ -1004,8 +1024,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
         $table = $table ?: Str::plural($name);
 
         return new MorphToMany(
-            $query, $this, $name, $table, $foreignKey,
-            $otherKey, $caller, $inverse
+            $query, $this, $name, $table, $foreignKey, $otherKey, $caller, $inverse
         );
     }
 
@@ -1306,8 +1325,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
                 'creating', 'created', 'updating', 'updated',
                 'deleting', 'deleted', 'saving', 'saved',
                 'restoring', 'restored',
-            ],
-            $this->observables
+            ], $this->observables
         );
     }
 
@@ -1444,8 +1462,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
         // the relationships and save each model via this "push" method, which allows
         // us to recurse into all of these nested relations for the model instance.
         foreach ($this->relations as $models) {
-            $models = $models instanceof Collection
-                        ? $models->all() : [$models];
+            $models = $models instanceof Collection ? $models->all() : [$models];
 
             foreach (array_filter($models) as $model) {
                 if (! $model->push()) {
@@ -1553,6 +1570,10 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
                 $this->updateTimestamps();
             }
 
+            // 20180209 - DungLD - Start - Add create and update by to table
+            $this->updateUserId();
+            // 20180209 - DungLD - End - Add create and update by to table
+
             // Once we have run the update operation, we will fire the "updated" event for
             // this model instance. This will allow developers to hook into these after
             // models are updated, giving them a chance to do any special processing.
@@ -1587,6 +1608,10 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
         if ($this->timestamps && Arr::get($options, 'timestamps', true)) {
             $this->updateTimestamps();
         }
+
+        // 20180209 - DungLD - Start - Add create and update by to table
+        $this->updateUserId();
+        // 20180209 - DungLD - End - Add create and update by to table
 
         // If the model has an incrementing key, we can use the "insertGetId" method on
         // the query builder, which will give us back the final inserted ID for this
@@ -1726,6 +1751,10 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
 
         $this->updateTimestamps();
 
+        // 20180209 - DungLD - Start - Add create and update by to table
+        $this->updateUserId();
+        // 20180209 - DungLD - End - Add create and update by to table
+
         return $this->save();
     }
 
@@ -1802,6 +1831,93 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
     {
         return new Carbon;
     }
+
+    // 20180209 - DungLD - Start - Add create and update by to table
+    /**
+     * Update the create and update by user id.
+     *
+     * @return void
+     */
+    protected function updateUserId()
+    {
+        $id = $this->getCurrentUserId();
+
+        if (!$this->isDirty(static::UPDATED_BY)) {
+            $this->setUpdatedBy($id);
+        }
+
+        if (!$this->exists && !$this->isDirty(static::CREATED_BY)) {
+            $this->setCreatedBy($id);
+        }
+    }
+
+    /**
+     * Set the value of the "created by" attribute.
+     *
+     * @param  mixed $value
+     * @return $this
+     */
+    public function setCreatedBy($value)
+    {
+        $this->{static::CREATED_BY} = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set the value of the "updated by" attribute.
+     *
+     * @param  mixed $value
+     * @return $this
+     */
+    public function setUpdatedBy($value)
+    {
+        $this->{static::UPDATED_BY} = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get the name of the "created by" column.
+     *
+     * @return string
+     */
+    public function getCreatedByColumn()
+    {
+        return static::CREATED_BY;
+    }
+
+    /**
+     * Get the name of the "updated by" column.
+     *
+     * @return string
+     */
+    public function getUpdatedbyColumn()
+    {
+        return static::UPDATED_BY;
+    }
+
+    /**
+     * Get current user id for the model.
+     *
+     * @return int
+     */
+    public function getCurrentUserId()
+    {
+        // 20180301 - DungLD - Start - Mod getCurrentUserId
+        if(!is_null( Auth::user())){
+            $id = Auth::user()->id;
+            return $id;
+        }
+        else{
+            return 1;
+        }
+        // 20180301 - DungLD - End - Mod getCurrentUserId
+
+        //$id = Auth::user()->id;
+        //return $id;
+    }
+    // 20180209 - DungLD - End - Add create and update by to table
 
     /**
      * Get a fresh timestamp for the model.
@@ -3070,6 +3186,10 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
             $this->getKeyName(),
             $this->getCreatedAtColumn(),
             $this->getUpdatedAtColumn(),
+            // 20180209 - DungLD - Start - Add create and update by to table
+            $this->getCreatedByColumn(),
+            $this->getUpdatedbyColumn(),
+            // 20180209 - DungLD - End - Add create and update by to table
         ];
 
         $except = $except ? array_unique(array_merge($except, $defaults)) : $defaults;
@@ -3559,4 +3679,42 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
     {
         $this->bootIfNotBooted();
     }
+
+    //huantn start update
+    static function insertModule($module_name, $request, $rule = null, $url = null)
+    {
+        if (is_null($rule)) {
+            $rule = $request->all();
+        }
+        $validator = Validator::make($rule, static::$rules);
+
+        if ($validator->fails()) {
+            if (is_null($url)) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+            else {
+                return redirect($url)->withErrors($validator)->withInput();
+            }
+        }
+        return \Dwij\Laraadmin\Models\Module::insert($module_name, $request);
+    }
+
+    static function updateModule($module_name, $request, $id, $rule = null, $url = null)
+    {
+        if (is_null($rule)) {
+            $rule = $request->all();
+        }
+        $validator = Validator::make($rule, static::$rules);
+        if ($validator->fails()) {
+            if (is_null($url)) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+            else {
+                return redirect($url)->withErrors($validator)->withInput();
+            }
+        }
+        return \Dwij\Laraadmin\Models\Module::updateRow($module_name, $request, $id);
+    }
+
+    //huantn end update
 }

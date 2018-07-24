@@ -53,8 +53,97 @@ class CodeGenerator
 
         $md = str_replace("__model_class_name__", $config->modelName, $md);
         $md = str_replace("__db_table_name__", $config->dbTableName, $md);
+        //huantn
+        $entityClass = ucfirst(str_plural($config->modelName)) . "Entity";
+        $modalNewEntity = "return new " . $entityClass . '($id);';
+        $modelGetAll = '$lst = ' . $config->modelName . '::all();';
+        $modelGetAll .= "\n";
+        $modelGetAll .= '    $arr = array(); ';
+        $modelGetAll .= "\n";
+        $modelGetAll .= '    foreach ($lst as $val) {';
+        $modelGetAll .= "\n";
+        $modelGetAll .= '        $t = new ' . $entityClass . '($val);';
+        $modelGetAll .= "\n";
+        $modelGetAll .= '        $arr[] = $t;';
+        $modelGetAll .= "\n";
+        $modelGetAll .= "    }  ";
+        $modelGetAll .= "\n";
+        $modelGetAll .= '    return $arr;';
+        $listing_cols = "";
+        $model_fillrule = "";
+        
+        
+       
+                        
+        foreach ($config->module->fields as $field) {
+            $listing_cols .= "'" . $field['colname'] . "', ";
+            $rule ="";
+            if(isset($field['required']) && $field['required']=='1'){
+                $rule .= 'required|';
+            }
+            if(isset($field['minlength']) && $field['minlength']>0){
+                $rule .= 'min:'.$field['minlength'].'|';
+            }
+            if(isset($field['maxlength']) && $field['maxlength']>0){
+                $rule .= 'max:'.$field['maxlength'].'|';
+            }
+            if(isset($field['unique']) && $field['unique']=='1'){
+                $rule .= 'unique:'.str_plural($config->singularVar).'|';
+            }
+            $rule = trim($rule,'|');
+            $model_fillrule.="'" . $field['colname'] . "' =>'".$rule."', \n";
+        }
+        $listing_cols = trim($listing_cols, ", ");
+        
+        $md = str_replace("__entity_class_name__", ucfirst(str_plural($config->modelName)), $md);
+        $md = str_replace("__entity__", $entityClass, $md);
+        $md = str_replace("__model_fillable__", $listing_cols, $md);
+        $md = str_replace("__model_fillrule__", $model_fillrule, $md);
+        $md = str_replace("__model_get_all__", $modelGetAll, $md);
+        $md = str_replace("__model_new_entity__", $modalNewEntity, $md);
+        //end huantn
 
-        file_put_contents(base_path('app/Models/'.$config->modelName.".php"), $md);
+        file_put_contents(base_path('app/Models/' . $config->modelName . ".php"), $md);
+    }
+
+    // huantn
+    public static function createEntity($config, $comm = null) {
+        $entityClass = ucfirst(str_plural($config->modelName)) . "Entity";
+        $templateDirectory = __DIR__ . '/stubs';
+
+        $md = file_get_contents($templateDirectory . "/entity.stub");
+        $md = str_replace("__entity_class_name__", $entityClass, $md);
+        $entity_variable = 'public $id;' . "\n";
+        $entity_assign = '$this->id=$var->id;' . "\n";
+        $entity_assign_arr = '';
+        $entity_assign_arr .='if(isset($var["id"])){'."\n";
+         $entity_assign_arr .='$this->id=$var["id"]'.";\n";
+        $entity_assign_arr .='}'." \n";
+        $entity_related = "";
+        $entity_modal = '$var = \App\Models\\' . ucfirst($config->modelName) . '::find($var);' . "\n";
+        foreach ($config->module->fields as $field) {
+            $entity_variable .= "public $" . $field['colname'] . ";\n";
+            $entity_assign .= '$this->' . $field['colname'] . '=$var->' . $field['colname'] . ";\n";
+            $entity_assign_arr .='if(isset($var["' . $field['colname'] . '"])){'."\n";
+            $entity_assign_arr .='$this->' . $field['colname'] . '=$var["' . $field['colname'] . '"]'.";\n";
+            $entity_assign_arr .='}'." \n";
+            if (isset($field['popup_vals']) && strlen(trim($field['popup_vals'])) > 0) {
+                if (substr($field['popup_vals'], 0, 1) == '@') {
+                    $classRef = ucfirst(substr($field['popup_vals'], 1)) . "Entity";
+                    $entity_related .= "   public function getRelated". $classRef ."() { \n";
+                    $entity_related .= '        $ref = new \App\Entity\\' . $classRef . '($this->' . $field['colname'] . ");\n";
+                    $entity_related .= '        return $ref;' . "\n";
+                    $entity_related .= "   } \n";
+                }
+            }
+        }
+        $md = str_replace("__entity_variable__", $entity_variable, $md);
+        $md = str_replace("__entity_assign__", $entity_assign, $md);
+        $md = str_replace("__entity_assign_array__", $entity_assign_arr, $md);
+        $md = str_replace("__entity_modal__", $entity_modal, $md);
+
+        $md = str_replace("__entity_related__", $entity_related, $md);
+        file_put_contents(base_path('app/Entity/' . $entityClass . ".php"), $md);
     }
 
     public static function createViews($config, $comm = null) {
@@ -83,8 +172,27 @@ class CodeGenerator
         $inputFields = trim($inputFields);
         $md = str_replace("__input_fields__", $inputFields, $md);
 
-        file_put_contents(base_path('resources/views/la/'.$config->dbTableName.'/index.blade.php'), $md);
+        file_put_contents(base_path('resources/views/la/' . $config->dbTableName . '/index.blade.php'), $md);
+        // ============================ Add - huantn ============================
+        $md = file_get_contents($templateDirectory . "/views/add.blade.stub");
 
+        $md = str_replace("__module_name__", $config->moduleName, $md);
+        $md = str_replace("__db_table_name__", $config->dbTableName, $md);
+        $md = str_replace("__controller_class_name__", $config->controllerName, $md);
+        $md = str_replace("__singular_var__", $config->singularVar, $md);
+        $md = str_replace("__singular_cap_var__", $config->singularCapitalVar, $md);
+        $md = str_replace("__module_name_2__", $config->moduleName2, $md);
+
+        // Listing columns
+        $inputFields = "";
+        foreach ($config->module->fields as $field) {
+            $inputFields .= "\t\t\t\t\t@la_input($" . "module, '" . $field['colname'] . "')\n";
+        }
+        $inputFields = trim($inputFields);
+        $md = str_replace("__input_fields__", $inputFields, $md);
+
+        file_put_contents(base_path('resources/views/la/' . $config->dbTableName . '/add.blade.php'), $md);
+        
         // ============================ Edit ============================
         $md = file_get_contents($templateDirectory."/views/edit.blade.stub");
 
@@ -136,11 +244,14 @@ class CodeGenerator
 			$routesFile = app_path('Http/admin_routes.php');
 		}
 
-		$contents = file_get_contents($routesFile);
-		$contents = str_replace('});', '', $contents);
-		file_put_contents($routesFile, $contents);
-		
-        $md = file_get_contents($templateDirectory."/routes.stub");
+        // DungLD
+        $routesFile = app_path('Http/admin_routes.php');
+
+        $contents = file_get_contents($routesFile);
+        $contents = str_replace('});', '', $contents);
+        file_put_contents($routesFile, $contents);
+
+        $md = file_get_contents($templateDirectory . "/routes.stub");
 
         $md = str_replace("__module_name__", $config->moduleName, $md);
         $md = str_replace("__controller_class_name__", $config->controllerName, $md);

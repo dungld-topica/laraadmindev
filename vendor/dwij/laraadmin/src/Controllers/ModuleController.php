@@ -206,6 +206,9 @@ class ModuleController extends Controller
 		$config = CodeGenerator::generateConfig($module->name,$module->fa_icon);
 		
 		CodeGenerator::createController($config);
+        //huantn
+        CodeGenerator::createEntity($config, $this);
+        //end huantn
 		CodeGenerator::createModel($config);
 		CodeGenerator::createViews($config);
 		CodeGenerator::appendRoutes($config);
@@ -253,6 +256,9 @@ class ModuleController extends Controller
 		
 		// Generate CRUD
 		CodeGenerator::createController($config);
+        //huantn
+        CodeGenerator::createEntity($config, $this);
+        //end huantn
 		CodeGenerator::createModel($config);
 		CodeGenerator::createViews($config);
 		CodeGenerator::appendRoutes($config);
@@ -286,6 +292,9 @@ class ModuleController extends Controller
 		
 		// Generate CRUD
 		CodeGenerator::createController($config);
+        //huantn
+        CodeGenerator::createEntity($config, $this);
+        //end huantn
 		CodeGenerator::createModel($config);
 		CodeGenerator::createViews($config);
 		

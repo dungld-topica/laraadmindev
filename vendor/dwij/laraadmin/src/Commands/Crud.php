@@ -50,6 +50,9 @@ class Crud extends Command
             
             CodeGenerator::createController($config, $this);
             CodeGenerator::createModel($config, $this);
+             //huantn
+            CodeGenerator::createEntity($config, $this);
+            // end huantn
             CodeGenerator::createViews($config, $this);
             CodeGenerator::appendRoutes($config, $this);
             CodeGenerator::addMenu($config, $this);
