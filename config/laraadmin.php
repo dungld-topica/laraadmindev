@@ -13,7 +13,8 @@ return [
     */
     
 	'adminRoute' => 'admin',
-    
+
+    'public' => '', // DungLD
     /*
     |--------------------------------------------------------------------------
     | Uploads Configuration
