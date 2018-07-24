@@ -7,7 +7,8 @@
 
 namespace App\Models;
 
-class APIResult {
+class APIResult
+{
 
     public $status = 200;
     //201:không tồn tại function truyền lên
@@ -18,7 +19,8 @@ class APIResult {
     public $count;
     public $message = "";
 
-    public function toJson() {
+    public function toJson()
+    {
         $data1 = new \stdClass();
         $data1->count = $this->count;
         $data1->result = $this->result;

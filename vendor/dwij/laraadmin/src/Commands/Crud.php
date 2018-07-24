@@ -25,7 +25,7 @@ class Crud extends Command
      * @var string
      */
     protected $description = 'Generate CRUD Methods for given Module.';
-    
+
     /* ================ Config ================ */
     var $module = null;
     var $controllerName = "";
@@ -34,7 +34,7 @@ class Crud extends Command
     var $dbTableName = "";
     var $singularVar = "";
     var $singularCapitalVar = "";
-    
+
     /**
      * Generate a CRUD files inclusing Controller, Model and Routes
      *
@@ -43,24 +43,24 @@ class Crud extends Command
     public function handle()
     {
         $module = $this->argument('module');
-        
+
         try {
-            
+
             $config = CodeGenerator::generateConfig($module, "fa-cube");
-            
+
             CodeGenerator::createController($config, $this);
             CodeGenerator::createModel($config, $this);
-             //huantn
+            //huantn
             CodeGenerator::createEntity($config, $this);
             // end huantn
             CodeGenerator::createViews($config, $this);
             CodeGenerator::appendRoutes($config, $this);
             CodeGenerator::addMenu($config, $this);
-            
+
         } catch (Exception $e) {
-            $this->error("Crud::handle exception: ".$e);
-            throw new Exception("Unable to generate migration for ".($module)." : ".$e->getMessage(), 1);
+            $this->error("Crud::handle exception: " . $e);
+            throw new Exception("Unable to generate migration for " . ($module) . " : " . $e->getMessage(), 1);
         }
-        $this->info("\nCRUD successfully generated for ".($module)."\n");
+        $this->info("\nCRUD successfully generated for " . ($module) . "\n");
     }
 }

@@ -81,12 +81,12 @@ class __controller_class_name__ extends Controller
 	public function create()
 	{
 		if(Module::hasAccess("__module_name__", "create")) {		
-				$module = Module::get('__module_name__');
-				
-				return view('la.__view_folder__.add', [
-					'module' => $module,
-					'view_col' => $this->view_col,
-				]);
+            $module = Module::get('__module_name__');
+
+            return view('la.__view_folder__.add', [
+                'module' => $module,
+                'view_col' => $this->view_col,
+            ]);
 		} else {
 			return redirect(config('laraadmin.adminRoute')."/");
 		}
@@ -111,12 +111,13 @@ class __controller_class_name__ extends Controller
 //			}
 //			$insert_id = Module::insert("__module_name__", $request);
 //			return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
-                    $field = __model_name__::insertModule("__module_name__", $request);
-                    if (is_int($field)) {
-                        return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
-                    } else {
-                        return $field;
-                    }
+
+            $field = __model_name__::insertModule("__module_name__", $request);
+            if (is_int($field)) {
+                return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+            } else {
+                return $field;
+            }
 		} else {
 			return redirect(config('laraadmin.adminRoute')."/");
 		}
@@ -204,12 +205,13 @@ class __controller_class_name__ extends Controller
 //			}
 //			$insert_id = Module::updateRow("__module_name__", $request, $id);
 //			return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+
 			$field = __model_name__::updateModule("__module_name__", $request,$id);
-                        if (is_int($field)) {
-                            return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
-                        } else {
-                            return $field;
-                        }
+                if (is_int($field)) {
+                    return redirect()->route(config('laraadmin.adminRoute') . '.__route_resource__.index');
+                } else {
+                    return $field;
+                }
 		} else {
 			return redirect(config('laraadmin.adminRoute')."/");
 		}

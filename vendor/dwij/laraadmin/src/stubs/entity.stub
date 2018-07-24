@@ -9,16 +9,16 @@ namespace App\Entity;
 
 class __entity_class_name__ 
 {
-   __entity_variable__
-    
-     public function __construct($var) {
-         if (is_object($var)) { 
-           __entity_assign__
-        }else if (is_array($var)) { 
-           __entity_assign_array__
-        }else if ($var>0) { 
-           __entity_modal__
-           __entity_assign__
+    __entity_variable__
+
+    public function __construct($var) {
+        if (is_object($var)) {
+            __entity_assign__
+        }else if (is_array($var)) {
+            __entity_assign_array__
+        }else if ($var>0) {
+            __entity_modal__
+            __entity_assign__
         }
     }
     __entity_related__
