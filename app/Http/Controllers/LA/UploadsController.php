@@ -25,6 +25,7 @@ use Validator;
 use Datatables;
 
 use App\Models\Upload;
+use App\Http\Common\Resize;
 
 class UploadsController extends Controller
 {
@@ -66,9 +67,9 @@ class UploadsController extends Controller
 		} else {
             return redirect(config('laraadmin.adminRoute')."/");
         }
-	}
-	
-	/**
+    }
+
+    /**
      * Get file
      *
      * @return \Illuminate\Http\Response
