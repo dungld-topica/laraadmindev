@@ -11,11 +11,5 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-/* ================== Homepage + Admin Routes ================== */
-
-require __DIR__.'/admin_routes.php';
-require __DIR__.'/api_routes.php';
+Route::get('/getapi', 'APIController@GetAPI');
+Route::post('/postapi', 'APIController@PostAPI');
