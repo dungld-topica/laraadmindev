@@ -4,7 +4,6 @@
  * Help: http://laraadmin.com
  */
 
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 use Dwij\Laraadmin\Models\Module;
@@ -23,7 +22,12 @@ class CreateUsersTable extends Migration
             ["context_id", "Context", "Integer", false, "0", 0, 0, false],
             ["email", "Email", "Email", true, "", 0, 250, false],
             ["password", "Password", "Password", false, "", 6, 250, true],
-            ["type", "User Type", "Dropdown", false, "Employee", 0, 0, false, ["Employee", "Client"]],
+            ["type", "User Type", "Dropdown", false, "Employee", 0, 0, false, ["Employee","Client"]],
+            ["designation", "Designation", "TextField", false, "", 0, 50, false],
+            ["gender", "Gender", "Radio", false, "", 0, 0, false, ["Male","Female"]],
+            ["mobile", "Mobile", "Mobile", false, "", 10, 20, false],
+            ["address", "Address", "Address", false, "", 0, 1000, false],
+            ["birth_day", "Birth Day", "Date", false, "", 0, 0, false],
         ]);
 		
 		/*

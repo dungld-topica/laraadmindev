@@ -4,60 +4,27 @@
  * Help: http://laraadmin.com
  */
 
-namespace App;
-
-use Illuminate\Auth\Authenticatable;
-use Illuminate\Auth\Passwords\CanResetPassword;
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
-use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
-use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Zizaco\Entrust\Traits\EntrustUserTrait;
-
 use App\Entity\UsersEntity;
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
+class User extends Model
 {
-    use Authenticatable, CanResetPassword;
-    use SoftDeletes {
-        restore as private restoreA;
-    }
-    use EntrustUserTrait {
-        restore as private restoreB;
-    }
+    use SoftDeletes;
 
     protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'name', 'email', 'password', "role", "context_id", "type"
-    ];
-
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
-        'password', 'remember_token',
+
     ];
 
-    // protected $dates = ['deleted_at'];
+    protected $guarded = [];
 
-    /**
-     * @return mixed
-     */
-    public function uploads()
-    {
-        return $this->hasMany('App\Upload');
-    }
-
+    protected $dates = ['deleted_at'];
+    //huanttn
+    protected $fillable = ['name', 'context_id', 'email', 'password', 'type', 'designation', 'gender', 'mobile', 'address', 'birth_day'];
     static $redirect_url = null;
     static $rules = array(
         //refer https://laravel.com/docs/5.5/validation#available-validation-rules
@@ -107,10 +74,5 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         }
         return $arr;
     }
-
-    public function restore()
-    {
-        $this->restoreA();
-        $this->restoreB();
-    }
+    //end huantn
 }
